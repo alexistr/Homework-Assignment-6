@@ -1,5 +1,5 @@
-# Homework-Assignment-1
-The NodeJS Master Class Homework Assignment #1
+# Homework-Assignment-6
+The NodeJS Master Class Homework Assignment #6
 
 
 The server listens on port 3000, it will send back {'message' : 'Hello world'}
