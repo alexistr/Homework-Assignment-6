@@ -1,22 +1,30 @@
 /*
-* Homework Assignment 1
+* Homework Assignment 6
 *
 */
+"use strict";
 
 //dependencies
 const http = require('http');
 const url = require('url');
+const cluster = require('cluster');
+const os = require('os');
+
+// container for the app
+let app = {};
 
 //Instantiate server
-let httpServer = http.createServer( (req,res) => serverLogic(req,res) );
+app.httpServer = http.createServer( (req,res) => app.serverLogic(req,res) );
 
 //Start server
-httpServer.listen(3000,() => {
-  console.log('httpServer is listening on port 3000');
-});
+app.startServer = () => {
+    app.httpServer.listen(3000,() => {
+      console.log('httpServer is listening on port 3000');
+    });
+};
 
 //Server
-let serverLogic = (req,res) => {
+app.serverLogic = (req,res) => {
   //Get requested path and strip out / from end and begining
   let path = url.parse(req.url,false).pathname.replace(/^\/+|\/+$/g,'');
 
@@ -25,7 +33,7 @@ let serverLogic = (req,res) => {
   //Requete finished send a response
   req.on('end',() => {
     //Chose handler based on requested path
-    let chosenHandler = typeof(router[path]) !== 'undefined' ? router[path] : handlers.notFound;
+    let chosenHandler = typeof(app.router[path]) !== 'undefined' ? app.router[path] : app.handlers.notFound;
 
     chosenHandler( (statusCode,data) => {
       data = typeof(data) === 'object' ? data : {};
@@ -34,21 +42,36 @@ let serverLogic = (req,res) => {
       res.writeHead(statusCode);
       res.end(JSON.stringify(data));
     })
-
   });
-
-
 };
 
 //Handlers
-let handlers = {};
-handlers.hello = (callback) => {
+app.handlers = {};
+
+app.handlers.hello = (callback) => {
   callback(200,{'message':'Hello World'});
 }
-handlers.notFound = (callback) => {
+
+app.handlers.notFound = (callback) => {
   callback(404);
 }
 
 //Router
-let router = {};
-router.hello = handlers.hello;
+app.router = {};
+
+app.router.hello = app.handlers.hello;
+
+// Initialisation
+app.init = () => {
+  if(cluster.isMaster) {
+    for(let i=0; i < os.cpus().length;i++) {
+      cluster.fork();
+    }
+  } else {
+    // This is a fork start the app
+    app.startServer();
+  }
+};
+
+// Start the app
+app.init();
