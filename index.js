@@ -19,7 +19,7 @@ app.httpServer = http.createServer( (req,res) => app.serverLogic(req,res) );
 //Start server
 app.startServer = () => {
     app.httpServer.listen(3000,() => {
-      console.log('httpServer is listening on port 3000');
+      console.log(`httpServer is listening on port 3000, Worker id is ${cluster.worker.id}.`);
     });
 };
 
@@ -49,12 +49,12 @@ app.serverLogic = (req,res) => {
 app.handlers = {};
 
 app.handlers.hello = (callback) => {
-  callback(200,{'message':'Hello World'});
+  callback(200,{'message':`Hello World from worker id ${cluster.worker.id}`});
 }
 
 app.handlers.notFound = (callback) => {
   callback(404);
-}
+  }
 
 //Router
 app.router = {};
